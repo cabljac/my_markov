@@ -4,6 +4,8 @@ use rand::Rng;
 use std::fs;
 
 fn main() {
+    const RESULT_LENGTH: usize = 500;
+
     let contents = fs::read_to_string("content.txt").expect("Something went wrong");
 
     // println!("\n{}", contents);
@@ -60,11 +62,11 @@ fn main() {
         }
     }
     // println!("{}", markov_array);
-    let mut start = 8_usize;
+    let mut start = 0_usize;
     let value = string_values.get_index(start).unwrap();
     let mut results: Vec<&str> = vec![];
     results.push(value.0);
-    for i in 0..600 {
+    for _i in 0..RESULT_LENGTH {
         start = traverse_chain(start, &markov_array, length);
         let x = string_values.get_index(start);
         if x == None {
@@ -74,7 +76,7 @@ fn main() {
         results.push(value.0);
     }
     // println!("{}", results.join(" "));
-    let result = results.join(" ");
+    let result = results.join(" ").replace('\n', " ");
     let _end = fs::write("result.txt", result);
 }
 
