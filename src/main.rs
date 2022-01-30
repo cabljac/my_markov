@@ -4,25 +4,14 @@ use rand::Rng;
 use std::fs;
 
 fn main() {
-    const RESULT_LENGTH: usize = 500;
-
+    const OUTPUT_LENGTH: usize = 1000;
+    const START_POS: usize = 0;
+    // fetch and process input:
     let contents = fs::read_to_string("content.txt").expect("Something went wrong");
+    let split: Vec<String> = process_input(contents);
 
-    // println!("\n{}", contents);
-
-    let split: Vec<String> = contents
-        .trim()
-        .split(" ")
-        .map(|s| {
-            s.to_string()
-                .replace("\"", "")
-                .replace(",", "")
-                .replace("“", "")
-        })
-        .collect();
-
+    // Record words in an IndexMap with their count (dont need count atm but might later)
     let mut string_values = IndexMap::new();
-
     for word in &split {
         if string_values.contains_key(&word) {
             *string_values.get_mut(&word).unwrap() += 1;
@@ -30,17 +19,9 @@ fn main() {
             string_values.insert(word, 1);
         }
     }
-
-    // for (key, value) in &string_values {
-    //     println!("{} {}", key, value);
-    // }
-
+    // Record stochastic matrix of Markov chain:
     let length = string_values.len();
-
     let mut markov_array = Array2::<f64>::zeros((length, length));
-
-    // loop through split, check next word, find index of that word and add 1 to that element
-    // in markov array
 
     for (i, _word) in (&split).iter().enumerate() {
         if i + 1 < split.len() {
@@ -61,12 +42,13 @@ fn main() {
             }
         }
     }
-    // println!("{}", markov_array);
-    let mut start = 0_usize;
+
+    // traverse the chain at random, starting at START_POS
+    let mut start = START_POS;
     let value = string_values.get_index(start).unwrap();
     let mut results: Vec<&str> = vec![];
     results.push(value.0);
-    for _i in 0..RESULT_LENGTH {
+    for _i in 0..OUTPUT_LENGTH {
         start = traverse_chain(start, &markov_array, length);
         let x = string_values.get_index(start);
         if x == None {
@@ -78,6 +60,20 @@ fn main() {
     // println!("{}", results.join(" "));
     let result = results.join(" ").replace('\n', " ");
     let _end = fs::write("result.txt", result);
+}
+
+fn process_input(input: String) -> Vec<String> {
+    input
+        .trim()
+        .split(" ")
+        .map(|s| {
+            s.to_string()
+                .replace("\"", "")
+                .replace(",", "")
+                .replace("“", "")
+                .replace("”", "")
+        })
+        .collect()
 }
 
 fn traverse_chain(start: usize, markov_array: &Array2<f64>, length: usize) -> usize {
@@ -94,3 +90,5 @@ fn traverse_chain(start: usize, markov_array: &Array2<f64>, length: usize) -> us
     }
     j
 }
+
+// TODO: use sparse matrices
