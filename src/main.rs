@@ -73,7 +73,9 @@ fn main() {
         let value = string_values.get_index(start).unwrap();
         results.push(value.0);
     }
-    println!("{}", results.join(" "))
+    // println!("{}", results.join(" "));
+    let result = results.join(" ");
+    let _end = fs::write("result.txt", result);
 }
 
 fn traverse_chain(start: usize, markov_array: &Array2<f64>, length: usize) -> usize {
