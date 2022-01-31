@@ -11,37 +11,11 @@ fn main() {
     let split: Vec<String> = process_input(contents);
 
     // Record words in an IndexMap with their count (dont need count atm but might later)
-    let mut string_values = IndexMap::new();
-    for word in &split {
-        if string_values.contains_key(&word) {
-            *string_values.get_mut(&word).unwrap() += 1;
-        } else {
-            string_values.insert(word, 1);
-        }
-    }
+    let string_values = record_words(&split);
+
     // Record stochastic matrix of Markov chain:
     let length = string_values.len();
-    let mut markov_array = Array2::<f64>::zeros((length, length));
-
-    for (i, _word) in (&split).iter().enumerate() {
-        if i + 1 < split.len() {
-            let column = string_values.get_index_of(&split[i]).unwrap();
-            let row = string_values.get_index_of(&split[i + 1]).unwrap();
-            markov_array[[row, column]] += 1_f64;
-        }
-    }
-
-    for j in 0..length {
-        let mut sum = 0_f64;
-        for i in 0..length {
-            sum += &markov_array[[i, j]];
-        }
-        if sum > 0_f64 {
-            for i in 0..length {
-                markov_array[[i, j]] = markov_array[[i, j]] / sum;
-            }
-        }
-    }
+    let markov_array = get_markov_array(length, &split, &string_values);
 
     // traverse the chain at random, starting at START_POS
     let mut start = START_POS;
@@ -76,6 +50,18 @@ fn process_input(input: String) -> Vec<String> {
         .collect()
 }
 
+fn record_words(split: &Vec<String>) -> IndexMap<&String, u32> {
+    let mut string_values = IndexMap::new();
+    for word in split {
+        if string_values.contains_key(&word) {
+            *string_values.get_mut(&word).unwrap() += 1_u32;
+        } else {
+            string_values.insert(word, 1_u32);
+        }
+    }
+    string_values
+}
+
 fn traverse_chain(start: usize, markov_array: &Array2<f64>, length: usize) -> usize {
     let mut rng = rand::thread_rng();
     let random = rng.gen::<f64>();
@@ -91,4 +77,31 @@ fn traverse_chain(start: usize, markov_array: &Array2<f64>, length: usize) -> us
     j
 }
 
-// TODO: use sparse matrices
+fn get_markov_array(
+    length: usize,
+    split: &Vec<String>,
+    string_values: &IndexMap<&String, u32>,
+) -> Array2<f64> {
+    let mut markov_array = Array2::<f64>::zeros((length, length));
+
+    for (i, _word) in (&split).iter().enumerate() {
+        if i + 1 < split.len() {
+            let column = string_values.get_index_of(&split[i]).unwrap();
+            let row = string_values.get_index_of(&split[i + 1]).unwrap();
+            markov_array[[row, column]] += 1_f64;
+        }
+    }
+
+    for j in 0..length {
+        let mut sum = 0_f64;
+        for i in 0..length {
+            sum += &markov_array[[i, j]];
+        }
+        if sum > 0_f64 {
+            for i in 0..length {
+                markov_array[[i, j]] = markov_array[[i, j]] / sum;
+            }
+        }
+    }
+    markov_array
+}
